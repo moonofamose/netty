@@ -34,12 +34,15 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * {@link MultithreadEventLoopGroup} implementations which is used for NIO {@link Selector} based {@link Channel}s.
+ * MultithreadEventLoopGroup 的实现类，主要是用来基于NIO selector管理channel的
+ *
  */
 public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     /**
      * Create a new instance using the default number of threads, the default {@link ThreadFactory} and
      * the {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
+     * 创建一个默认线程数量的NioEventLoopGroup，这其实是重载，看最后一个就好了。
      */
     public NioEventLoopGroup() {
         this(0);
@@ -50,6 +53,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      * {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
      */
     public NioEventLoopGroup(int nThreads) {
+        // 默认的Executor为null，那说明可以定制
         this(nThreads, (Executor) null);
     }
 
@@ -70,6 +74,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     public NioEventLoopGroup(int nThreads, Executor executor) {
+        // 默认的SelectorProvider
         this(nThreads, executor, SelectorProvider.provider());
     }
 
@@ -166,19 +171,27 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     @Override
     protected EventLoop newChild(Executor executor, Object... args) throws Exception {
+        // 这种写法也是有点醉啊，可变参数来接
+        // Selector 构建器
         SelectorProvider selectorProvider = (SelectorProvider) args[0];
+        // NioEventLoopGroup 线程池组选择线程池
         SelectStrategyFactory selectStrategyFactory = (SelectStrategyFactory) args[1];
+        // 任务拒绝处理器
         RejectedExecutionHandler rejectedExecutionHandler = (RejectedExecutionHandler) args[2];
+        // 任务队列工厂类
         EventLoopTaskQueueFactory taskQueueFactory = null;
         EventLoopTaskQueueFactory tailTaskQueueFactory = null;
 
         int argsLength = args.length;
         if (argsLength > 3) {
+            // 默认好像是没有设置这个的
             taskQueueFactory = (EventLoopTaskQueueFactory) args[3];
         }
         if (argsLength > 4) {
+            // 默认好像是没有设置这个的
             tailTaskQueueFactory = (EventLoopTaskQueueFactory) args[4];
         }
+        // 咦，这里将executor包裹进去，那么其实线程归NioEventLoop管，线程创建归executor管
         return new NioEventLoop(this, executor, selectorProvider,
                 selectStrategyFactory.newSelectStrategy(),
                 rejectedExecutionHandler, taskQueueFactory, tailTaskQueueFactory);

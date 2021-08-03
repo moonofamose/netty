@@ -801,6 +801,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
         ObjectUtil.checkNotNull(unit, "unit");
         if (inEventLoop()) {
+            // 判断EventLoop是否正在使用当前线程进行执行
             throw new IllegalStateException("cannot await termination of the current thread");
         }
 

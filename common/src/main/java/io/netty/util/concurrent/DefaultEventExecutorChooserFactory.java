@@ -32,6 +32,9 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
     @Override
     public EventExecutorChooser newChooser(EventExecutor[] executors) {
+        // 这里主要是针对选择方法进行优化
+        // 为2的倍数用位运算肯定更快
+        // 不为2的倍数，则取模就是最方便的写法
         if (isPowerOfTwo(executors.length)) {
             return new PowerOfTwoEventExecutorChooser(executors);
         } else {
@@ -39,8 +42,17 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
         }
     }
 
+    /**
+     * 判断是否为2的倍数
+     * @param val 要判断的值
+     * @return 2的倍数为true 否则为false
+     */
     private static boolean isPowerOfTwo(int val) {
         return (val & -val) == val;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(isPowerOfTwo(16));
     }
 
     private static final class PowerOfTwoEventExecutorChooser implements EventExecutorChooser {

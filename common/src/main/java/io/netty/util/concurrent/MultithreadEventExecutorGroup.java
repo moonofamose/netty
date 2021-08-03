@@ -70,25 +70,31 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      */
     protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
                                             EventExecutorChooserFactory chooserFactory, Object... args) {
+        // 检查nThreads是不是正数，默认是cpu核心数*2
         checkPositive(nThreads, "nThreads");
-
+        // 如果自己不需要定制化线程池的，有默认的单线程线程池
         if (executor == null) {
+            // 线程池初始化，没有任务队列
+            // newDefaultThreadFactory 负责线程的创建
+            // FastThreadLocalThread
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
-
+        // 创建线程池组
         children = new EventExecutor[nThreads];
 
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                // 创建 NioEventLoop作为线程池组管理的元素
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
-                // TODO: Think about if this is a good exception type
+                // TODO: Think about if this is a good exception type   EventExecutorInitializeException 如何？
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
                 if (!success) {
                     for (int j = 0; j < i; j ++) {
+                        // 这里 j<i 很灵性，只需要关闭异常前创建的NioEventLoop
                         children[j].shutdownGracefully();
                     }
 
@@ -96,6 +102,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                         EventExecutor e = children[j];
                         try {
                             while (!e.isTerminated()) {
+                                // 等待关闭
                                 e.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
                             }
                         } catch (InterruptedException interrupted) {
@@ -108,8 +115,9 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
+        // EventExecutor 选择器，就是有请求来了，NioEventLoopGroup如何去选择EventExecutor去执行请求
         chooser = chooserFactory.newChooser(children);
-
+        // 终止监听器，监听EventExecutor是否停掉
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
@@ -125,6 +133,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
         Set<EventExecutor> childrenSet = new LinkedHashSet<EventExecutor>(children.length);
         Collections.addAll(childrenSet, children);
+        // 只读EventExecutor集合
         readonlyChildren = Collections.unmodifiableSet(childrenSet);
     }
 

@@ -32,17 +32,24 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
     /**
      * Returns {@code true} if and only if all {@link EventExecutor}s managed by this {@link EventExecutorGroup}
      * are being {@linkplain #shutdownGracefully() shut down gracefully} or was {@linkplain #isShutdown() shut down}.
+     * 检查所有被EventExecutorGroup管理的EventExecutor是否已经优雅的关闭了。
+     * 或者说所有的EventExecutor的isShutdown都返回true
      */
     boolean isShuttingDown();
 
     /**
      * Shortcut method for {@link #shutdownGracefully(long, long, TimeUnit)} with sensible default values.
-     *
+     * 基于默认值的 {shutdownGracefully(long, long, TimeUnit)}方法的简单调用方式
      * @return the {@link #terminationFuture()}
      */
     Future<?> shutdownGracefully();
 
     /**
+     * 告知executor需要进行关闭，一旦这个方法调用了，那么isShuttingDown() 方法开始返回true，而executor也准备开始关闭自己。
+     * 不像shutdown()方法，这个会更优雅一点。它会有个关闭的静默期，如果在这期间有任务被提交，那么静默期就会重新计算。
+     * 总的来说就是：
+     * 在进行关闭前会等待一定时间，如果在这个期间有任务被提交，那么等待时间将重新开始计算
+     *
      * Signals this executor that the caller wants the executor to be shut down.  Once this method is called,
      * {@link #isShuttingDown()} starts to return {@code true}, and the executor prepares to shut itself down.
      * Unlike {@link #shutdown()}, graceful shutdown ensures that no tasks are submitted for <i>'the quiet period'</i>
@@ -59,6 +66,7 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
     Future<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit unit);
 
     /**
+     * 所有被当前EventExecutorGroup管理的EventExecutor都进行关闭后会进行异步回调
      * Returns the {@link Future} which is notified when all {@link EventExecutor}s managed by this
      * {@link EventExecutorGroup} have been terminated.
      */
@@ -66,6 +74,7 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
 
     /**
      * @deprecated {@link #shutdownGracefully(long, long, TimeUnit)} or {@link #shutdownGracefully()} instead.
+     * 这个是强行关闭，已经不建议使用了
      */
     @Override
     @Deprecated
@@ -73,15 +82,25 @@ public interface EventExecutorGroup extends ScheduledExecutorService, Iterable<E
 
     /**
      * @deprecated {@link #shutdownGracefully(long, long, TimeUnit)} or {@link #shutdownGracefully()} instead.
+     * 这个是强行关闭，已经不建议使用了
      */
     @Override
     @Deprecated
     List<Runnable> shutdownNow();
 
     /**
+     * （重要方法）
+     * 返回EventExecutorGroup管理的诸多EventExecutor中的一个，这个由子类自己决定选择方式
      * Returns one of the {@link EventExecutor}s managed by this {@link EventExecutorGroup}.
      */
     EventExecutor next();
+
+
+    /**
+     * =================================================
+     * 下面都是ScheduledExecutorService, Iterable<EventExecutor>的方法的重写（嗯，寂寞重写）
+     * =================================================
+     */
 
     @Override
     Iterator<EventExecutor> iterator();
