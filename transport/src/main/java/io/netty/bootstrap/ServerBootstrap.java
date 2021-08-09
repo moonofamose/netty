@@ -78,12 +78,16 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * Set the {@link EventLoopGroup} for the parent (acceptor) and the child (client). These
      * {@link EventLoopGroup}'s are used to handle all the events and IO for {@link ServerChannel} and
      * {@link Channel}'s.
+     * 配置两个线程组，一个是parent作为acceptor用来接受请求，一个是child作为worker来处理完成连接的请求的后续事件处理
+     * EventLoopGroup是用于处理所有来自ServerChannel和Channel的事件和IO操作的。
      */
     public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {
+        // 这个是启动类所共有的
         super.group(parentGroup);
         if (this.childGroup != null) {
             throw new IllegalStateException("childGroup set already");
         }
+        // 这个是服务端独有的，是ServerBootstrap的属性
         this.childGroup = ObjectUtil.checkNotNull(childGroup, "childGroup");
         return this;
     }
@@ -91,6 +95,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     /**
      * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they get created
      * (after the acceptor accepted the {@link Channel}). Use a value of {@code null} to remove a previous set
+     * 在acceptor接受到客户端连接后，初始化channel时，channel所拥有的配置
+     * 如果value为null，则表示移除配置
+     * ChannelOption属于核心配置，根据自身项目所需，可以进行优化
+     *
      * {@link ChannelOption}.
      */
     public <T> ServerBootstrap childOption(ChannelOption<T> childOption, T value) {
@@ -108,6 +116,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     /**
      * Set the specific {@link AttributeKey} with the given value on every child {@link Channel}. If the value is
      * {@code null} the {@link AttributeKey} is removed
+     * 这里是child中每个channel所拥有的属性
+     * value 为null时，表示移除属性
      */
     public <T> ServerBootstrap childAttr(AttributeKey<T> childKey, T value) {
         ObjectUtil.checkNotNull(childKey, "childKey");
@@ -121,6 +131,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     /**
      * Set the {@link ChannelHandler} which is used to serve the request for the {@link Channel}'s.
+     * 配置childGroup接受到的channel事件处理类
      */
     public ServerBootstrap childHandler(ChannelHandler childHandler) {
         this.childHandler = ObjectUtil.checkNotNull(childHandler, "childHandler");
@@ -129,9 +140,12 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     @Override
     void init(Channel channel) {
+        // 初始化ChannelOptions配置到channel中
         setChannelOptions(channel, newOptionsArray(), logger);
+        // 初始化 属性到channel中
         setAttributes(channel, newAttributesArray());
 
+        // 构建channel I/O事件处理程序链条
         ChannelPipeline p = channel.pipeline();
 
         final EventLoopGroup currentChildGroup = childGroup;
@@ -159,6 +173,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         });
     }
 
+    /**
+     * 自我检查
+     * @return 当前启动类
+     */
     @Override
     public ServerBootstrap validate() {
         super.validate();

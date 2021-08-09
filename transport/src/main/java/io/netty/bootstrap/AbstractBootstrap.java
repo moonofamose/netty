@@ -307,6 +307,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            // 默认通过ReflectiveChannelFactory进行Channel的初始化，当然，你也可以自定义channel工厂
             channel = channelFactory.newChannel();
             init(channel);
         } catch (Throwable t) {
