@@ -33,6 +33,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
 /**
+ * 多线程事件循环组
  * {@link MultithreadEventLoopGroup} implementations which is used for NIO {@link Selector} based {@link Channel}s.
  * MultithreadEventLoopGroup 的实现类，主要是用来基于NIO selector管理channel的
  *

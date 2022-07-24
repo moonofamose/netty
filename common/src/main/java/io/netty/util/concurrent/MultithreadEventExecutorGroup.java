@@ -63,9 +63,9 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     /**
      * Create a new instance.
      *
-     * @param nThreads          the number of threads that will be used by this instance.
-     * @param executor          the Executor to use, or {@code null} if the default should be used.
-     * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.
+     * @param nThreads          the number of threads that will be used by this instance. 要使用的线程数
+     * @param executor          the Executor to use, or {@code null} if the default should be used. 可以自定义Executor，默认使用的是ThreadPerTaskExecutor执行器
+     * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.  创建EventExecutorChooser的工厂类
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
      */
     protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
